@@ -36,3 +36,20 @@ df["rating_group"] = df["rating"].map(rating_map).fillna("Other")
 
 print(df["rating_group"].value_counts())
 print(df.groupby("type")["duration_num"].describe().round(1)) 
+
+## genre features and the feature table
+from sklearn.preprocessing import MultiLabelBinarizer
+
+genre_lists = df["listed_in"].str.split(", ")
+mlb = MultiLabelBinarizer()
+genres = pd.DataFrame(mlb.fit_transform(genre_lists), columns=mlb.classes_, index=df.index)
+
+top_genres = genres.sum().sort_values(ascending=False).head(15).index
+genres = genres[top_genres]
+print(genres.sum().sort_values(ascending=False))
+
+rating_dummies = pd.get_dummies(df["rating_group"], prefix="rating")
+type_dummy = (df["type"] == "Movie").astype(int).rename("is_movie")
+
+features = pd.concat([df[["duration_num"]], type_dummy, rating_dummies, genres], axis=1)
+print(features.shape)
